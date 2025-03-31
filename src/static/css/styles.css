@@ -1,0 +1,21 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+h1 {
+    font-family: 'Arial', sans-serif;
+    font-weight: bold;
+    color: #343a40;
+}
+
+.chart {
+    max-width: 600px;
+    max-height: 300px;
+    margin: 0 auto; /* Center the chart */
+    display: block;
+}
