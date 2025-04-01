@@ -60,6 +60,18 @@ const updateDashboard = async () => {
 setInterval(updateDashboard, 5000);
 document.addEventListener('DOMContentLoaded', updateDashboard);
 
+const stateMap = {
+    0: "Unknown",
+    1: "Other",
+    2: "Running",
+    3: "Off",
+    4: "Stopping",
+    6: "Paused",
+    7: "Starting",
+    8: "Reset"
+};
+
+
 const updateHyperVInfo = async () => {
     try {
         const response = await fetch('/hyperv'); // Fetch data from the backend
@@ -72,7 +84,7 @@ const updateHyperVInfo = async () => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${vm.Name}</td>
-                <td>${vm.State}</td>
+                <td>${stateMap[vm.State] || "Unknown"}</td> <!-- Convert state to string -->
                 <td>${vm.CPUUsage}%</td>
                 <td>${vm.MemoryAssigned} GB</td>
                 <td>${vm.Uptime || 'N/A'}</td>
