@@ -87,8 +87,7 @@ const updateHyperVInfo = async () => {
                 <td>${stateMap[vm.State] || "Unknown"}</td> <!-- Convert state to string -->
                 <td>${vm.CPUUsage}%</td>
                 <td>${vm.MemoryAssigned} GB</td>
-                <td>${vm.Uptime || 'N/A'}</td>
-            `;
+                <td>${vm.Uptime.Minutes === 0 ? 'Off' : vm.Uptime.Minutes || 'N/A'}</td>            `;
             tableBody.appendChild(row);
         });
     } catch (error) {
