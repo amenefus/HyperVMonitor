@@ -48,6 +48,14 @@
         </div>
         <div class="row">
             <div class="col-md-12">
+                <div style="width: 600px; height: 300px; margin: 0 auto;">
+                    <canvas id="usageChart"></canvas>
+                    
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
                 <div class="card text-white bg-dark">
                     <div class="card-header">Hyper-V Virtual Machines</div>
                     <div class="card-body">
@@ -71,11 +79,30 @@
                 </div>
             </div>
         </div>
-    </div>
-        <div class="row">
+        <div class="row mt-5">
             <div class="col-md-12">
-                <div style="width: 600px; height: 300px; margin: 0 auto;">
-                    <canvas id="usageChart"></canvas>
+                <div class="card text-white bg-danger">
+                    <div class="card-header">Incidents</div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table class="table table-dark table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Hostname</th>
+                                        <th>Issue</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="incident-table">
+                                    <tr>
+                                        <td colspan="5">No incidents logged.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

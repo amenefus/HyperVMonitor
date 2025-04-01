@@ -98,3 +98,46 @@ const updateHyperVInfo = async () => {
 // Refresh the Hyper-V info every 5 seconds
 setInterval(updateHyperVInfo, 5000);
 document.addEventListener('DOMContentLoaded', updateHyperVInfo);
+
+const updateIncidents = async () => {
+    try {
+        const response = await fetch('/incidents'); // Fetch incidents from the backend
+        const incidents = await response.json();
+
+        const tableBody = document.getElementById('incident-table');
+        tableBody.innerHTML = ''; // Clear existing rows
+
+        incidents.forEach((incident, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${incident[0]}</td>
+                <td>${incident[1]}</td>
+                <td>${incident[2]}</td>
+                <td>${incident[3]}</td>
+                <td>
+                    <button class="btn btn-sm btn-success" onclick="acknowledgeIncident(${index})">Acknowledge</button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Error fetching incidents:', error);
+    }
+};
+
+const acknowledgeIncident = async (id) => {
+    try {
+        await fetch('/incidents', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+        });
+        updateIncidents(); // Refresh the incident table
+    } catch (error) {
+        console.error('Error acknowledging incident:', error);
+    }
+};
+
+// Refresh the incidents table every 5 seconds
+setInterval(updateIncidents, 5000);
+document.addEventListener('DOMContentLoaded', updateIncidents);

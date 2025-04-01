@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 from flask_cors import CORS
 import psutil
 import time
@@ -7,6 +7,16 @@ import platform
 from datetime import datetime
 import subprocess
 import json
+import csv
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+INCIDENTS_FILE = os.path.join(BASE_DIR, 'static', 'incidents.csv')
+
+if not os.path.exists(INCIDENTS_FILE):
+    with open(INCIDENTS_FILE, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(['Timestamp', 'Hostname', 'Issue', 'Status'])
 
 app = Flask(__name__)
 CORS(app)
@@ -65,6 +75,10 @@ def get_system_metrics():
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
     }
+
+    if cpu_usage > 10:
+        log_incident(cpu_usage)
+
     print(metrics)  # Debugging: Log the metrics to the console
     return metrics
 
@@ -91,6 +105,19 @@ def get_hyperv_info():
         print(f"Error parsing PowerShell output: {e}")
         return []
 
+def log_incident(cpu_usage):
+    """Log an incident when CPU usage exceeds the threshold."""
+    print(f"Logging incident: CPU usage is {cpu_usage}%")  # Debugging
+    hostname = platform.node()
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    issue_title = f"High CPU Usage: {cpu_usage}%"
+    incident = [timestamp, hostname, issue_title, "Pending"]
+
+    # Append the incident to the CSV file
+    with open(INCIDENTS_FILE, 'a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(incident)
+
 @app.route('/')
 def index():
     """Render the main dashboard page"""
@@ -106,6 +133,38 @@ def metrics():
 def hyperv():
     """API endpoint to get Hyper-V virtual machine information."""
     return jsonify(get_hyperv_info())
+
+@app.route('/incidents', methods=['GET', 'POST'])
+def incidents():
+    """API endpoint to handle incidents."""
+    if request.method == 'GET':
+        # Read incidents from the CSV file
+        try:
+            with open(INCIDENTS_FILE, 'r') as file:
+                reader = csv.reader(file)
+                incidents = [row for row in reader]
+            return jsonify(incidents)
+        except FileNotFoundError:
+            return jsonify([])
+
+    elif request.method == 'POST':
+        # Mark an incident as acknowledged
+        data = request.json
+        incident_id = data.get('id')
+        updated_incidents = []
+
+        with open(INCIDENTS_FILE, 'r') as file:
+            reader = csv.reader(file)
+            for i, row in enumerate(reader):
+                if i == incident_id:
+                    row[3] = "Acknowledged"
+                updated_incidents.append(row)
+
+        with open(INCIDENTS_FILE, 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerows(updated_incidents)
+
+        return jsonify({"message": "Incident updated successfully"})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
