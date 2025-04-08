@@ -75,8 +75,8 @@ def get_system_metrics():
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
     }
-
-    if cpu_usage > 10:
+    #Writing to Incidents file if CPU usage exceeds a threshold
+    if cpu_usage > 75:  # Example threshold for CPU usage
         log_incident(cpu_usage)
 
     print(metrics)  # Debugging: Log the metrics to the console
