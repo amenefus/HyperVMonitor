@@ -1,21 +1,3 @@
-const ctx = document.getElementById('usageChart').getContext('2d');
-const usageChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-        labels: ['CPU Usage', 'Memory Usage', 'Storage Usage'],
-        datasets: [{
-            label: 'System Usage',
-            data: [0, 0, 0], // Initial data
-            backgroundColor: ['#007bff', '#28a745', '#ffc107'],
-            borderWidth: 1
-        }]
-    },
-    options: {
-        responsive: true, // Enable responsiveness
-        maintainAspectRatio: false // Allow custom aspect ratio
-    }
-});
-
 const updateElement = (id, text) => {
     const element = document.getElementById(id);
     if (element) {
@@ -44,13 +26,8 @@ const updateDashboard = async () => {
         updateElement('disk-total', `Total: ${data.disk.total} GB`);
         updateElement('disk-used', `Used: ${data.disk.used} GB`);
 
-        // Update chart data
-        usageChart.data.datasets[0].data = [
-            data.cpu.usage,
-            data.memory.percent,
-            data.disk.percent
-        ];
-        usageChart.update();
+        // Update gauges
+        updateGauges(data.cpu.usage, data.memory.percent);
     } catch (error) {
         console.error('Error fetching metrics:', error); // Log any errors
     }
@@ -70,7 +47,6 @@ const stateMap = {
     7: "Starting",
     8: "Reset"
 };
-
 
 const updateHyperVInfo = async () => {
     try {
@@ -141,3 +117,116 @@ const acknowledgeIncident = async (id) => {
 // Refresh the incidents table every 5 seconds
 setInterval(updateIncidents, 5000);
 document.addEventListener('DOMContentLoaded', updateIncidents);
+
+let cpuGauge = null;
+let ramGauge = null;
+
+function initGauges() {
+    const config = {
+        type: 'doughnut',
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            circumference: 180,
+            rotation: -90,
+            cutout: '75%',
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    };
+
+    // CPU Gauge
+    const cpuConfig = {
+        ...config,
+        data: {
+            datasets: [{
+                data: [0, 100],
+                backgroundColor: ['#0d6efd', '#dee2e6'],
+                borderWidth: 0
+            }]
+        },
+        plugins: [{
+            id: 'cpuText',
+            afterDraw: (chart) => {
+                const width = chart.width;
+                const height = chart.height;
+                const ctx = chart.ctx;
+                ctx.restore();
+                ctx.font = '24px Arial';
+                ctx.textBaseline = 'middle';
+                ctx.textAlign = 'center';
+                const text = `${chart.data.datasets[0].data[0]}%`;
+                const textX = width / 2;
+                const textY = height - 30;
+                ctx.fillText(text, textX, textY);
+                ctx.font = '16px Arial';
+                ctx.fillText('CPU', width / 2, height - 60);
+                ctx.save();
+            }
+        }]
+    };
+
+    // RAM Gauge
+    const ramConfig = {
+        ...config,
+        data: {
+            datasets: [{
+                data: [0, 100],
+                backgroundColor: ['#198754', '#dee2e6'],
+                borderWidth: 0
+            }]
+        },
+        plugins: [{
+            id: 'ramText',
+            afterDraw: (chart) => {
+                const width = chart.width;
+                const height = chart.height;
+                const ctx = chart.ctx;
+                ctx.restore();
+                ctx.font = '24px Arial';
+                ctx.textBaseline = 'middle';
+                ctx.textAlign = 'center';
+                const text = `${chart.data.datasets[0].data[0]}%`;
+                const textX = width / 2;
+                const textY = height - 30;
+                ctx.fillText(text, textX, textY);
+                ctx.font = '16px Arial';
+                ctx.fillText('RAM', width / 2, height - 60);
+                ctx.save();
+            }
+        }]
+    };
+
+    cpuGauge = new Chart(document.getElementById('cpuGauge'), cpuConfig);
+    ramGauge = new Chart(document.getElementById('ramGauge'), ramConfig);
+}
+
+function updateGauges(cpuUsage, ramUsage) {
+    if (cpuGauge && ramGauge) {
+        cpuGauge.data.datasets[0].data = [cpuUsage, 100 - cpuUsage];
+        ramGauge.data.datasets[0].data = [ramUsage, 100 - ramUsage];
+        cpuGauge.update();
+        ramGauge.update();
+    }
+}
+
+// Initialize gauges when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    initGauges();
+    // Call this in your existing metrics fetch function
+    fetch('/metrics')
+        .then(response => response.json())
+        .then(data => {
+            updateGauges(data.cpu.usage, data.memory.percent);
+        });
+});
+
+// Add this to your existing periodic refresh function
+setInterval(() => {
+    fetch('/metrics')
+        .then(response => response.json())
+        .then(data => {
+            updateGauges(data.cpu.usage, data.memory.percent);
+        });
+}, 3000);
